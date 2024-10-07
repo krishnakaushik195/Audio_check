@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audio to Audio in client_side</title>
+
+    <!-- Import the pipeline from transformers.js -->
+    <script type="module">
+        // Import the pipeline from transformers.js
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.5.4';
+
+        // Make pipeline available globally
+        window.pipeline = pipeline;
+    </script>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+        }
+
+        .container-main {
+            max-width: 900px;
+            margin: 20px auto;
+        }
+
+        .header-main-text h1 {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .header-sub-text h3 {
+            font-size: 1.25rem;
+            color: #6c757d;
+        }
+
+        hr {
+            margin: 20px 0;
+        }
+
+        #transcribedTextOutput,
+        #outputArea {
+            background-color: #f8f9fa;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ced4da;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .btn-custom {
+            width: 150px;
+            margin-right: 10px;
+        }
+
+        @media (max-width: 576px) {
+            .btn-custom {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container-main">
+        <!-- Page Header -->
+        <div class="row text-center mb-4">
+            <div class="col-12">
+                <div class="header-main-text">
+                    <h1>Audio to Audio chatbot in client_side</h1>
+                </div>
+                <div class="header-sub-text">
+                    <h3>Used Transformers.js </h3>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <!-- Live Audio Input Section -->
+        <div class="container">
+            <h5 class="mb-4">Live Audio Input</h5>
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <button id="start-recording" class="btn btn-primary btn-custom" onclick="startRecording()">Start Recording</button>
+                </div>
+                <div class="col-md-6">
+                    <button id="stop-recording" class="btn btn-danger btn-custom" onclick="stopRecording()" disabled>Stop Recording</button>
+                </div>
+            </div>
+            <h6>Transcribed Text:</h6>
+            <pre id="transcribedTextOutput">Waiting for transcription...</pre>
+        </div>
+
+        <hr>
+
+        <!-- Text Generation Section -->
+        <div class="container">
+            <h5 class="mb-4">Text-to-text Generation</h5>
+            <h6>Generated Output:</h6>
+            <pre id="outputArea">Awaiting generated text...</pre>
+            <button id="speak-button" class="btn btn-success mt-3 btn-custom" onclick="speakText()" disabled>Speak</button>
+        </div>
+
+        <hr>
+
+        <!-- Script Section -->
+        <script>
+            let transcriber, generator;
+            let mediaRecorder;
+            let audioChunks = [];
+
+            // Initialize the models
+            async function initializeModels() {
+                // Load the transcriber model for audio-to-text
+                transcriber = await pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny.en');
+                
+                // Load the text generation model for text-to-text transformation
+                generator = await pipeline('text2text-generation', 'Xenova/LaMini-Flan-T5-783M');
+            }
+
+            // Start recording the audio
+            async function startRecording() {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.start();
+                document.getElementById("start-recording").disabled = true;
+                document.getElementById("stop-recording").disabled = false;
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+            }
+
+            // Stop recording and process the audio
+            async function stopRecording() {
+                mediaRecorder.stop();
+                document.getElementById("start-recording").disabled = false;
+                document.getElementById("stop-recording").disabled = true;
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks);
+                    const url = URL.createObjectURL(audioBlob);
+                    audioChunks = [];
+
+                    // Transcribe the audio to text
+                    const result = await transcriber(url);
+                    const transcribedText = result.text;
+                    document.getElementById("transcribedTextOutput").innerText = transcribedText;
+
+                    // Automatically pass the transcribed text to the text generator
+                    await generateText(transcribedText);
+                };
+            }
+
+            // Generate text based on the transcribed input
+            async function generateText(inputText) {
+                const result = await generator(inputText, {
+                    max_new_tokens: 100,
+                });
+                const generatedText = JSON.stringify(result, null, 2);
+                document.getElementById("outputArea").innerText = generatedText;
+
+                // Enable the Speak button
+                document.getElementById("speak-button").disabled = false;
+            }
+
+            // Text-to-Speech function
+            function speakText() {
+                const text = document.getElementById("outputArea").innerText;
+
+                // Create a new SpeechSynthesisUtterance object
+                const utterance = new SpeechSynthesisUtterance(text);
+
+                // Speak the text
+                window.speechSynthesis.speak(utterance);
+            }
+
+            // Initialize the models after the DOM is fully loaded
+            window.addEventListener("DOMContentLoaded", initializeModels);
+        </script>
+    </div>
+</body>
+
+</html>
