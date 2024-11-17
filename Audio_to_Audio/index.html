@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversational Chatbot with Voice Input</title>
+
+    <!-- Import the pipeline from transformers.js -->
+    <script type="module">
+        import { pipeline } from 'https://cdn.jsdelivr.net/npm/@xenova/transformers@2.5.4';
+        window.pipeline = pipeline;
+    </script>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+
+<body style="font-family: Arial, sans-serif;">
+    <div class="container mt-5" style="max-width: 800px; margin: 0 auto;">
+        <h1 class="text-center mb-4" style="font-weight: bold; color: #333;">Conversational Voice Chatbot</h1>
+
+        <!-- Chatbot Interface -->
+        <div id="chat-container" class="p-3" style="height: 70vh; overflow-y: auto;">
+            <!-- Chat messages will appear here -->
+        </div>
+
+        <!-- Input and Button Section -->
+        <div class="input-group mt-3">
+            <input id="user-input" type="text" class="form-control" placeholder="Type your message..." />
+            <button id="send-button" class="btn btn-primary" onclick="handleUserInput()">Send</button>
+            <button id="record-button" class="btn btn-secondary" onclick="toggleRecording()">🎙️</button>
+        </div>
+    </div>
+
+    <!-- External JavaScript -->
+    <script src="script.js"></script>
+
+    <style>
+        /* Chat message styling */
+        .user-message {
+            text-align: right;
+            color: #004085;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 15px;
+            background-color: #d1ecf1;
+            max-width: 75%;
+            margin-left: auto;
+            font-family: Arial, sans-serif;
+        }
+        .bot-message {
+            text-align: left;
+            color: #155724;
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 15px;
+            background-color: #d4edda;
+            max-width: 75%;
+            margin-right: auto;
+            font-family: Arial, sans-serif;
+        }
+        /* Scrollbar styling */
+        #chat-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        #chat-container::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+    </style>
+</body>
+
+</html>
